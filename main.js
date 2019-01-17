@@ -41,7 +41,7 @@ var packcollection = function (pngcollection) {
         if (!sizeMap[sizekey]) sizeMap[sizekey] = 1;
         else sizeMap[sizekey]++;
     });
-    var aimedWidth = Math.sqrt(totalSize), targetWidth = aimedWidth;
+    var aimedWidth = Math.sqrt(totalSize), targetWidth = 0;
     for (var k in sizeMap) {
         var tempWidth = +k.split(",")[0];
         var tempCount = +(aimedWidth / tempWidth).toFixed(0);
@@ -92,13 +92,13 @@ var packcollection = function (pngcollection) {
         maxNameLength = Math.max(String(cssname).length, maxNameLength);
         maxWidthLength = Math.max(String(width).length, maxWidthLength);
         maxHeightLength = Math.max(String(height).length, maxHeightLength);
-        maxLeftLength = Math.max(String(left).length, maxLeftLength);
-        maxTopLength = Math.max(String(top).length, maxTopLength);
+        maxLeftLength = Math.max(String(-left).length, maxLeftLength);
+        maxTopLength = Math.max(String(-top).length, maxTopLength);
         png.bitblt(dest, 0, 0, width, height, left, top);
     });
 
     var cssdata = pngcollection.map(function (png) {
-        return `.png-concat-${padding(png.cssname, maxNameLength)}{ width:${padding(png.width, maxWidthLength)}px; height:${padding(png.height, maxHeightLength)}px; background-position:${padding(png.left, maxLeftLength)}px ${padding(png.top, maxTopLength)}px }`
+        return `.png-concat-${padding(png.cssname, maxNameLength)} { width: ${padding(png.width, maxWidthLength)}px; height: ${padding(png.height, maxHeightLength)}px; background-position: ${padding(-png.left, maxLeftLength)}px ${padding(-png.top, maxTopLength)}px }`
     }).join("\r\n");
     var divdata = pngcollection.map(function (png) {
         return `<div class="png-concat-div png-concat-${png.cssname}"></div>`
