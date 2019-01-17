@@ -1,4 +1,4 @@
-## 全局安装使用
+# 全局安装使用
 
 1. 安装
 ```sh
@@ -33,12 +33,12 @@ png-concat .5px
 ```sh
 png-concat a.concat 33px
 ```
-##. 生成的文件说明
+6. 生成的文件说明
 1. `png-concat.concat.png` 最终合并的文件
 2. `png-concat.concat.css` 合并文件的css样式表
 3. `png-concat.concat.html` 图标引用示例
 
-## 以模块的方式引用
+# 以模块的方式引用
 ```js
 var concatpng = require("png-concat");
 // 修改为你自己图片源路径和合并文件输出路径，参数的顺序固定
