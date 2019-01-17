@@ -4,7 +4,10 @@ var fs = require("fs");
 var path = require("path");
 var { PNG } = pngjs;
 
-var concatpng = function (pathname, destpath) {
+var concatpng = function (pathname, destpath, pixel = "1px") {
+    if (pixel && /^(\d+)?(\.\d+)?$/.test(pixel)) pixel = 1 / pixel + "px";
+    var pixel_scale = /^(\d+(?:\.\d*)?|\.\d+)(.*?)$/.exec(pixel);
+    if (!pixel_scale) throw new Error("pixel参数无效，可以传入的值有1px,2px,1em,2em等数字加单位的形式");
     fs.readdir(pathname, function (err, files) {
         var pngcollection = [];
         if (err) {
@@ -18,7 +21,7 @@ var concatpng = function (pathname, destpath) {
                 pngObject.cssname = pngObject.name.replace(/[^\w\-\_]/g, a => a.charCodeAt(0).toString(36));
                 pngcollection.push(pngObject);
                 if (pngcollection.length === filtered.length) {
-                    packcollection(pngcollection, destpath);
+                    packcollection(pngcollection, destpath, +pixel_scale[1] || 1, pixel_scale[2] || "px");
                 }
             });
         });
@@ -31,7 +34,7 @@ var readinfo = function (pngsrc) {
     });
 };
 
-var packcollection = function (pngcollection, filedestname) {
+var packcollection = function (pngcollection, filedestname, ratio, pixel) {
     var sizeMap = {
     };
     var totalSize = 0;
@@ -80,33 +83,39 @@ var packcollection = function (pngcollection, filedestname) {
         height: totalHeight
     });
     var [maxWidthLength, maxHeightLength, maxNameLength, maxLeftLength, maxTopLength] = [0, 0, 0, 0, 0];
+    var scale = function (str) {
+        if (typeof str === "string") return str;
+        return +(ratio * str).toFixed(4) + pixel;
+    };
+    pngcollection.forEach(function (png) {
+        var { width, height, top, left, cssname } = png;
+        maxNameLength = Math.max(scale(cssname).length, maxNameLength);
+        maxWidthLength = Math.max(scale(width).length, maxWidthLength);
+        maxHeightLength = Math.max(scale(height).length, maxHeightLength);
+        maxLeftLength = Math.max(scale(-left).length, maxLeftLength);
+        maxTopLength = Math.max(scale(-top).length, maxTopLength);
+        png.bitblt(dest, 0, 0, width, height, left, top);
+    });
+    var pngfilename = filedestname + ".png";
+    var cssfilename = filedestname + ".css";
+    var htmlfilename = filedestname + ".html";
     var padding = function (str, minLength) {
         if (typeof str !== "string") var isReverse = true;;
-        str = String(str);
+        str = scale(str);
         if (str.length >= minLength) return str;
         if (isReverse) return " ".repeat(minLength - str.length) + str;
         return str + " ".repeat(minLength - str.length);
     };
-    pngcollection.forEach(function (png) {
-        var { width, height, top, left, cssname } = png;
-        maxNameLength = Math.max(String(cssname).length, maxNameLength);
-        maxWidthLength = Math.max(String(width).length, maxWidthLength);
-        maxHeightLength = Math.max(String(height).length, maxHeightLength);
-        maxLeftLength = Math.max(String(-left).length, maxLeftLength);
-        maxTopLength = Math.max(String(-top).length, maxTopLength);
-        png.bitblt(dest, 0, 0, width, height, left, top);
+    var stylesheets = pngcollection.map(function (png) {
+        return `.png-concat-${padding(png.cssname, maxNameLength)} { width: ${padding(png.width, maxWidthLength)}; height: ${padding(png.height, maxHeightLength)}; background-position: ${padding(-png.left, maxLeftLength)} ${padding(-png.top, maxTopLength)} }`
     });
-
-    var cssdata = pngcollection.map(function (png) {
-        return `.png-concat-${padding(png.cssname, maxNameLength)} { width: ${padding(png.width, maxWidthLength)}px; height: ${padding(png.height, maxHeightLength)}px; background-position: ${padding(-png.left, maxLeftLength)}px ${padding(-png.top, maxTopLength)}px }`
-    }).join("\r\n");
+    var cssdata = [
+        `.png-concat{ background: url('${pngfilename}') no-repeat 0 0 / ${scale(targetWidth)} ${scale(totalHeight)}; display: inline-block; }`
+    ].concat(stylesheets).join("\r\n");
     var divdata = pngcollection.map(function (png) {
-        return `<div class="png-concat-div png-concat-${png.cssname}"></div>`
+        return `<div class="png-concat png-concat-${png.cssname}"></div>`
     }).join("\r\n");
-    var pngfilename = filedestname + ".png";
-    var cssfilename = filedestname + ".css";
-    var htmlfilename = filedestname + ".html";
-    var htmldata = `<!doctype html>\r\n<html><head><meta charset="utf-8"/><title>png-concat图标查看工具</title><link rel="stylesheet" type='text/css' href="${cssfilename}"/><style>.png-concat-div{background-image:url('${pngfilename}');display:inline-block}</style></head>\r\n<body>\r\n${divdata}\r\n</body></html>`
+    var htmldata = `<!doctype html>\r\n<html><head><meta charset="utf-8"/><title>png-concat图标查看工具</title><link rel="stylesheet" type='text/css' href="${cssfilename}"/></head>\r\n<body>\r\n${divdata}\r\n</body></html>`
     dest.pack().pipe(fs.createWriteStream(pngfilename));
 
     fs.writeFile(cssfilename, cssdata, function (error) {
