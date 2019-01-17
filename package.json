@@ -1,9 +1,10 @@
 {
   "name": "png-concat",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "将多个分离的png图片合并成一张，并以相应的文件名生成css样式表",
-  "main": "main.js",
+  "main": "concat.js",
   "bin": {
+    "pngconcat": "main.js",
     "png-concat": "main.js"
   },
   "scripts": {
@@ -14,10 +15,12 @@
     "url": "git+https://github.com/yunxu1019/png-concat.git"
   },
   "keywords": [
+    "pngconcat",
     "png",
     "images",
     "css",
-    "concat"
+    "concat",
+    "img"
   ],
   "author": "不枝雀",
   "license": "ISC",
