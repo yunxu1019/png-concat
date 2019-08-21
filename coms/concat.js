@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 var pngjs = require("pngjs");
 var fs = require("fs");
 var path = require("path");
@@ -8,7 +7,7 @@ var getExtentionsFromPath = function (destpath) {
     var exts;
     if (/\.([\|]?(json|png|html|css))+$/i.test(destpath)) {
         if (!exts) exts = {};
-        destpath.replace(/[\s\S]+\.([^\.]*)$/, "$1").split("|").forEach(function (a) {
+        destpath.replace(/[\s\S]*\.([^\.]*)$/, "$1").split("|").forEach(function (a) {
             switch (a) {
                 case "html":
                     exts.html = true;
@@ -21,7 +20,7 @@ var getExtentionsFromPath = function (destpath) {
             }
         });
         exts.png = true;
-        destpath = destpath.replace(/([\s\S]+)\.[^\.]*$/, "$1") || void 0;
+        destpath = destpath.replace(/([\s\S]*)\.[^\.]*$/, "$1") || void 0;
     }
     return [destpath, exts];
 }
@@ -35,17 +34,18 @@ var concatpng = function (pathname, destpath, pixel = "1px") {
             console.error(err);
             return;
         }
-        files.filter(filename => /\.png$/i.test(filename) && !/\.concat\.png$/i.test(filename)).map(function (filename, cx, filtered) {
-            var fullpath = path.join(pathname, filename);
-            readinfo(fullpath).then(function (pngObject) {
-                pngObject.name = filename.replace(/\.png$/i, "");
-                pngObject.cssname = pngObject.name.replace(/[^\w\-\_]/g, a => a.charCodeAt(0).toString(36));
-                pngcollection.push(pngObject);
-                if (pngcollection.length === filtered.length) {
-                    packcollection(pngcollection, destpath, +pixel_scale[1] || 1, pixel_scale[2] || "px");
-                }
+        files.filter(name => /\.png$/i.test(name) && !/\.concat\.png$/i.test(name))
+            .map(function (filename, cx, filtered) {
+                var fullpath = path.join(pathname, filename);
+                readinfo(fullpath).then(function (pngObject) {
+                    pngObject.name = filename.replace(/\.png$/i, "");
+                    pngObject.cssname = pngObject.name.replace(/[^\w\-\_]/g, a => a.charCodeAt(0).toString(36));
+                    pngcollection.push(pngObject);
+                    if (pngcollection.length === filtered.length) {
+                        packcollection(pngcollection, destpath, +pixel_scale[1] || 1, pixel_scale[2] || "px");
+                    }
+                });
             });
-        });
 
     })
 };
@@ -150,7 +150,7 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
         if (extentions[ext]) {
             fs.writeFile(filename, data, function (error) {
                 if (error) return console.error(
-                    new Error(`写入${extt}失败！`)
+                    new Error(`写入${ext}失败！`)
                 );
                 console.log(filename);
             });
@@ -158,4 +158,4 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
 
     });
 };
-module.exports = concatpng;
+var concat = concatpng;

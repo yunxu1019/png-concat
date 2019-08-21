@@ -37,6 +37,18 @@ png-concat a.concat 33px
 1. `png-concat.concat.png` 最终合并的文件
 2. `png-concat.concat.css` 合并文件的css样式表
 3. `png-concat.concat.html` 图标引用示例
+3. `png-concat.concat.json` 与mapbox同格式的json
+
+6. 选择生成的文件
+您可以传入扩展名指定最终输出的文件类型，如果不指定，将输出全部文件，可用的语法如下：
+```sh 
+    pngconcat .json
+    pngconcat .css
+    pngconcat .html
+    pngconcat FILENAME.json
+    pngconcat FILENAME.json|css
+    pngconcat FILENAME.html|css|json
+```
 
 # 以模块的方式引用
 ```js
