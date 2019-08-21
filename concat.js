@@ -138,16 +138,14 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
     }).join("\r\n");
     var htmldata = `<!doctype html>\r\n<html><head><meta charset="utf-8"/><title>png-concat图标查看工具</title><link rel="stylesheet" type='text/css' href="${cssfilename}"/></head>\r\n<body>\r\n${divdata}\r\n</body></html>`
     dest.pack().pipe(fs.createWriteStream(pngfilename));
+    var jsondata = {};
+    pngcollection.forEach(function ({ cssname, width, height, left, top }) {
+        return jsondata[cssname] = { pixelRatio: ratio, width, height, x: left, y: top };
+    });
     [
         ["css", cssdata, cssfilename],
         ['html', htmldata],
-        ['json', JSON.stringify({
-            width: targetWidth,
-            height: totalHeight,
-            items: pngcollection.map(function ({ cssname, width, height, left, top }) {
-                return { name: cssname, width, height, left, top };
-            })
-        }, null, 4)]
+        ['json', JSON.stringify(jsondata, null, 4)]
     ].forEach(function ([ext, data, filename = filedestname + '.' + ext]) {
         if (extentions[ext]) {
             fs.writeFile(filename, data, function (error) {
