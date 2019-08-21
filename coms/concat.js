@@ -158,4 +158,4 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
 
     });
 };
-var concat = concatpng;
+var concat = module.exports = concatpng;
