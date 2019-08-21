@@ -4,6 +4,27 @@ var fs = require("fs");
 var path = require("path");
 var { PNG } = pngjs;
 
+var getExtentionsFromPath = function (destpath) {
+    var exts;
+    if (/\.([\|]?(json|png|html|css))+$/i.test(destpath)) {
+        if (!exts) exts = {};
+        destpath.replace(/[\s\S]+\.([^\.]*)$/, "$1").split("|").forEach(function (a) {
+            switch (a) {
+                case "html":
+                    exts.html = true;
+                case "css":
+                    exts.css = true;
+                    break;
+                case "json":
+                    exts.json = true;
+                    break;
+            }
+        });
+        exts.png = true;
+        destpath = destpath.replace(/([\s\S]+)\.[^\.]*$/, "$1") || void 0;
+    }
+    return [destpath, exts];
+}
 var concatpng = function (pathname, destpath, pixel = "1px") {
     if (pixel && /^(\d+)?(\.\d+)?$/.test(pixel)) pixel = 1 / pixel + "px";
     var pixel_scale = /^(\d+(?:\.\d*)?|\.\d+)(.*?)$/.exec(pixel);
@@ -34,7 +55,7 @@ var readinfo = function (pngsrc) {
     });
 };
 
-var packcollection = function (pngcollection, filedestname, ratio, pixel) {
+var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
     var sizeMap = {
     };
     var totalSize = 0;
@@ -96,9 +117,9 @@ var packcollection = function (pngcollection, filedestname, ratio, pixel) {
         maxTopLength = Math.max(scale(-top).length, maxTopLength);
         png.bitblt(dest, 0, 0, width, height, left, top);
     });
+    var [filedestname = "png-concat.concat", extentions = { png: true, html: true, css: true, json: true }] = getExtentionsFromPath(filedestpath);
     var pngfilename = filedestname + ".png";
     var cssfilename = filedestname + ".css";
-    var htmlfilename = filedestname + ".html";
     var padding = function (str, minLength) {
         if (typeof str !== "string") var isReverse = true;;
         str = scale(str);
@@ -117,15 +138,26 @@ var packcollection = function (pngcollection, filedestname, ratio, pixel) {
     }).join("\r\n");
     var htmldata = `<!doctype html>\r\n<html><head><meta charset="utf-8"/><title>png-concat图标查看工具</title><link rel="stylesheet" type='text/css' href="${cssfilename}"/></head>\r\n<body>\r\n${divdata}\r\n</body></html>`
     dest.pack().pipe(fs.createWriteStream(pngfilename));
+    [
+        ["css", cssdata, cssfilename],
+        ['html', htmldata],
+        ['json', JSON.stringify({
+            width: targetWidth,
+            height: totalHeight,
+            items: pngcollection.map(function ({ cssname, width, height, left, top }) {
+                return { name: cssname, width, height, left, top };
+            })
+        }, null, 4)]
+    ].forEach(function ([ext, data, filename = filedestname + '.' + ext]) {
+        if (extentions[ext]) {
+            fs.writeFile(filename, data, function (error) {
+                if (error) return console.error(
+                    new Error(`写入${extt}失败！`)
+                );
+                console.log(filename);
+            });
+        }
 
-    fs.writeFile(cssfilename, cssdata, function (error) {
-        if (error) throw new Error("写入css失败！");
-        console.log(cssfilename);
     });
-    fs.writeFile(htmlfilename, htmldata, function (error) {
-        if (error) throw new Error("写入html失败！");
-        console.log(htmlfilename);
-    });
-
 };
 module.exports = concatpng;
