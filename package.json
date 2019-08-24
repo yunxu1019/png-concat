@@ -20,7 +20,8 @@
     "images",
     "css",
     "concat",
-    "img"
+    "img",
+    "雪碧图"
   ],
   "author": "不枝雀",
   "license": "ISC",
