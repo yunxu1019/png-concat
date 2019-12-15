@@ -29,7 +29,7 @@
     "url": "https://github.com/yunxu1019/png-concat/issues"
   },
   "homepage": "https://github.com/yunxu1019/png-concat#readme",
-  "dependencies": {
-    "pngjs": "^3.3.3"
+  "devDependencies": {
+    "pngjs": "^3.4.0"
   }
 }

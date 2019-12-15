@@ -1,7 +1,7 @@
 @echo off
 setlocal
 set app=concat.js
-call efront build
+call efront publish exports
 move public\comm\concat public\concat
 echo #!/usr/bin/env node>public\main
 echo var concat = require("./concat");>>public\main
