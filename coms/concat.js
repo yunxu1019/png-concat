@@ -24,7 +24,8 @@ var getExtentionsFromPath = function (destpath) {
     }
     return [destpath, exts];
 }
-var concatpng = function (pathname, destpath, pixel = "1px") {
+var concatpng = function (pathname, destpath, pixel = "1px", prefix = 'png-concat') {
+    prefix = prefix.replace(/-$/, '');
     if (pixel && /^(\d+)?(\.\d+)?$/.test(pixel)) pixel = 1 / pixel + "px";
     var pixel_scale = /^(\d+(?:\.\d*)?|\.\d+)(.*?)$/.exec(pixel);
     if (!pixel_scale) throw new Error("pixel参数无效，可以传入的值有1px,2px,1em,2em等数字加单位的形式");
@@ -34,7 +35,7 @@ var concatpng = function (pathname, destpath, pixel = "1px") {
             console.error(err);
             return;
         }
-        files.filter(name => /\.png$/i.test(name) && !/\.concat\.png$/i.test(name))
+        files.filter(name => /\.png$/i.test(name) && !/\.concat\.png$/i.test(name) && name.indexOf(prefix) < 0 && destpath.indexOf(name.replace(/\.png$/, '') < 0))
             .map(function (filename, cx, filtered) {
                 var fullpath = path.join(pathname, filename);
                 readinfo(fullpath).then(function (pngObject) {
@@ -42,7 +43,7 @@ var concatpng = function (pathname, destpath, pixel = "1px") {
                     pngObject.cssname = pngObject.name.replace(/[^\w\-\_]/g, a => a.charCodeAt(0).toString(36));
                     pngcollection.push(pngObject);
                     if (pngcollection.length === filtered.length) {
-                        packcollection(pngcollection, destpath, +pixel_scale[1] || 1, pixel_scale[2] || "px");
+                        packcollection(pngcollection, destpath, +pixel_scale[1] || 1, pixel_scale[2] || "px", prefix);
                     }
                 });
             });
@@ -60,7 +61,7 @@ var readinfo = function (pngsrc) {
     });
 };
 
-var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
+var packcollection = function (pngcollection, filedestpath, ratio, pixel, prefix) {
     var sizeMap = {
     };
     var totalSize = 0;
@@ -116,7 +117,7 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
         maxTopLength = Math.max(scale(-top).length, maxTopLength);
         png.bitblt(dest, 0, 0, width, height, left, top);
     });
-    var [filedestname = "png-concat.concat", extentions = { png: true, html: true, css: true, json: true }] = getExtentionsFromPath(filedestpath);
+    var [filedestname = `${prefix}`, extentions = { png: true, html: true, css: true, json: true }] = getExtentionsFromPath(filedestpath);
     var pngfilename = filedestname + ".png";
     var cssfilename = filedestname + ".css";
     var padding = function (str, minLength) {
@@ -127,13 +128,13 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
         return str + " ".repeat(minLength - str.length);
     };
     var stylesheets = pngcollection.map(function (png) {
-        return `.png-concat-${padding(png.cssname, maxNameLength)} { width: ${padding(png.width, maxWidthLength)}; height: ${padding(png.height, maxHeightLength)}; background-position: ${padding(-png.left, maxLeftLength)} ${padding(-png.top, maxTopLength)} }`
+        return `.${prefix}-${padding(png.cssname, maxNameLength)} { width: ${padding(png.width, maxWidthLength)}; height: ${padding(png.height, maxHeightLength)}; background-position: ${padding(-png.left, maxLeftLength)} ${padding(-png.top, maxTopLength)} }`
     });
     var cssdata = [
-        `.png-concat{ background: url('${pngfilename}') no-repeat 0 0 / ${scale(targetWidth)} ${scale(totalHeight)}; display: inline-block; }`
+        `.${prefix}{ background: url('${pngfilename}') no-repeat 0 0 / ${scale(targetWidth)} ${scale(totalHeight)}; display: inline-block; }`
     ].concat(stylesheets).join("\r\n");
     var divdata = pngcollection.map(function (png) {
-        return `<div class="png-concat png-concat-${png.cssname}"></div>`
+        return `<div class="${prefix} ${prefix}-${png.cssname}"></div>`
     }).join("\r\n");
     var htmldata = `<!doctype html>\r\n<html><head><meta charset="utf-8"/><title>png-concat图标查看工具</title><link rel="stylesheet" type='text/css' href="${cssfilename}"/></head>\r\n<body>\r\n${divdata}\r\n</body></html>`
     dest.pack().pipe(fs.createWriteStream(pngfilename));

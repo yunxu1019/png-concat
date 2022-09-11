@@ -51,9 +51,24 @@ png-concat a.concat 33px
     pngconcat FILENAME.html|css|json
 ```
 
+## 7. 指定生成的样式前缀
+css样式表默认前缀为 png-concat-，可以传入以中划线`-`结尾的参数以指定前缀，如：
+```sh
+    pngconcat pc-
+```
+
+引入该命令生成的css后，指定元素的class的html如下：
+
+```html
+    <i class="pc pc-ICON_NAME"></i><!-- ICON_NAME 是图标的名字 -->
+```
+可在生成的 html 文件中找到所需的图标直接复制
+
+* 注意：如果指定了前缀而不指定文件名，生成的文件名将以前缀为准。
+
 # 以模块的方式引用
 ```js
 var concatpng = require("png-concat");
 // 修改为你自己图片源路径和合并文件输出路径，参数的顺序固定
-concatpng("/path/to/your/png/files/", "/path/to/your/destination/png-concat/files.concat", 1);
+concatpng("/path/to/your/png/files/", "/path/to/your/destination/png-concat/files.concat", 1, 'prefix');
 ```
