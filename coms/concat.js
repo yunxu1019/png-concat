@@ -49,6 +49,11 @@ var concatpng = function (pathname, destpath, pixel = "1px") {
 
     })
 };
+
+var getSizeKey = function (height) {
+    return Math.log2(height) * 2 | 0;
+};
+
 var readinfo = function (pngsrc) {
     return new Promise(function (ok, oh) {
         fs.createReadStream(pngsrc).pipe(new PNG).on('parsed', function () { ok(this) });
@@ -60,45 +65,39 @@ var packcollection = function (pngcollection, filedestpath, ratio, pixel) {
     };
     var totalSize = 0;
     pngcollection.forEach(function (png) {
-        var sizekey = [png.width, png.height].join(",");
+        var sizekey = getSizeKey(png.height);
         totalSize += png.width * png.height;
-        if (!sizeMap[sizekey]) sizeMap[sizekey] = 1;
-        else sizeMap[sizekey]++;
+        if (!sizeMap[sizekey]) sizeMap[sizekey] = [png.height];
+        if (png.height > sizeMap[sizekey][0]) sizeMap[sizekey][0] = png.height;
+        sizeMap[sizekey].push(png);
     });
-    var aimedWidth = Math.sqrt(totalSize), targetWidth = 0;
+    var aimedWidth = Math.sqrt(totalSize), targetWidth = 0, tempWidth = 0;
+    var grid = [], row = null;
     for (var k in sizeMap) {
-        var tempWidth = +k.split(",")[0];
-        var tempCount = +(aimedWidth / tempWidth).toFixed(0);
-        if (tempCount) {
-            if (tempCount < 1) tempCount = 1;
-            targetWidth = Math.max(tempCount * tempWidth, targetWidth);
+        for (var o of sizeMap[k].slice(1)) {
+            if (tempWidth && tempWidth + o.width <= aimedWidth) {
+                tempWidth += o.width;
+            }
+            else {
+                tempWidth = o.width;
+                sizeMap[k][1]++;
+                row = [0, 0];
+                grid.push(row);
+            }
+            row.push(o);
+            o.left = row[0];
+            row[0] += o.width;
+            row[1] = Math.max(row[1], o.height);
+            targetWidth = Math.max(tempWidth, targetWidth);
         }
     }
-    var offsetMap = {
-    };
     var totalHeight = 0;
-    for (var k in sizeMap) {
-        var [tempWidth, tempHeight] = k.split(",");
-        var tempCount = +(targetWidth / tempWidth);
-        var tempHeight = Math.ceil(sizeMap[k] / tempCount) * tempHeight;
-        offsetMap[k] = [0, totalHeight];
-        if (tempHeight) {
-            totalHeight += tempHeight;
+    for (var r of grid) {
+        for (var p of r) {
+            p.top = totalHeight;
         }
+        totalHeight += r[1];
     }
-    pngcollection.forEach(function (png) {
-        var { width, height } = png;
-        var sizekey = [width, height].join(",");
-        var [offsetLeft, offsetTop] = offsetMap[sizekey];
-        png.left = offsetLeft;
-        png.top = offsetTop;
-        offsetLeft += width;
-        if (offsetLeft + width > targetWidth) {
-            offsetLeft = 0;
-            offsetTop += height;
-        }
-        offsetMap[sizekey] = [offsetLeft, offsetTop];
-    });
     var dest = new PNG({
         width: targetWidth,
         height: totalHeight
