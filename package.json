@@ -4,11 +4,11 @@
   "description": "将多个分离的png图片合并成一张，并以相应的文件名生成css样式表",
   "main": "public/concat.js",
   "bin": {
-    "pngconcat": "public/main",
-    "png-concat": "public/main"
+    "pngconcat": "public/main.js",
+    "png-concat": "public/main.js"
   },
   "scripts": {
-    "prepare": "tools\\build"
+    "prepare": "tools\\build --no-crypt"
   },
   "repository": {
     "type": "git",

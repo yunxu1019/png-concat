@@ -5,9 +5,9 @@ var { PNG } = pngjs;
 
 var getExtentionsFromPath = function (destpath) {
     var exts;
-    if (/\.([\|]?(json|png|html|css))+$/i.test(destpath)) {
+    if (/\.([\/\|]?(json|png|html|css))+$/i.test(destpath)) {
         if (!exts) exts = {};
-        destpath.replace(/[\s\S]*\.([^\.]*)$/, "$1").split("|").forEach(function (a) {
+        destpath.replace(/[\s\S]*\.([^\.]*)$/, "$1").split(/[|\/]/).forEach(function (a) {
             switch (a) {
                 case "html":
                     exts.html = true;
@@ -24,11 +24,22 @@ var getExtentionsFromPath = function (destpath) {
     }
     return [destpath, exts];
 }
+var formatPixel = function (pixel) {
+    if (!pixel) return "1px";
+    var match = pixelreg.exec(pixel);
+    if (!match) throw new Error("pixel参数无效，可以传入的值有1px,2px,1em,2em等数字加单位的形式");
+    var [, n1 = 1, px, n2] = match;
+    n1 = parseFloat(n1) || 1;
+    n2 = parseFloat(n2);
+    if (n2) pixel = n1 / n2;
+    else if (!px) pixel = 1 / n1, px = 'px';
+    pixel = +(+pixel || 1).toFixed(4);
+    return pixel + px;
+};
 var concatpng = function (pathname, destpath, pixel = "1px", prefix = 'png-concat') {
     prefix = prefix.replace(/-$/, '');
-    if (pixel && /^(\d+)?(\.\d+)?$/.test(pixel)) pixel = 1 / pixel + "px";
+    pixel = formatPixel(pixel);
     var pixel_scale = /^(\d+(?:\.\d*)?|\.\d+)(.*?)$/.exec(pixel);
-    if (!pixel_scale) throw new Error("pixel参数无效，可以传入的值有1px,2px,1em,2em等数字加单位的形式");
     fs.readdir(pathname, function (err, files) {
         var pngcollection = [];
         if (err) {

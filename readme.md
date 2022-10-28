@@ -29,10 +29,15 @@ png-concat 2
 png-concat .5px
 ```
 可以使用的单位有 px,pt,rem,em,cm,mm，其他单位不支持
-
- 命令行模式下，文件名和图标的大小可以同时传入，先后顺序不限
+考虑到用户自己计算1rem是多个像素不方便，可以使用类似如下命令代替
 ```sh
-png-concat a.concat 33px
+png-concat 1rem=32px
+```
+
+命令行模式下，文件名和图标的大小可以同时传入，先后顺序不限
+
+```sh
+png-concat a.concat .33px
 ```
 ## 5. 生成的文件说明
 * *1.* `png-concat.concat.png` 最终合并的文件

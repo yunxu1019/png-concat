@@ -1,7 +1,9 @@
-var concat = require("./concat");
+var path = require("path");
+var concat = require(path.join(__dirname, "./concat.js"));
+extend(console, colored_console);
 var pngname, scale, prefix;
 for (var arg of process.argv.slice(2)) {
-    if (/^(\d+)?(\.\d*)?(p[xt]|r?em|[cm]m)?$/i.test(arg)) {
+    if (pixelreg.test(arg) || /\=/.test(arg)) {
         scale = arg;
     }
     else if (/\-$/.test(arg)) {
@@ -12,4 +14,9 @@ for (var arg of process.argv.slice(2)) {
     }
 
 }
-concat(process.cwd(), pngname || prefix && prefix.replace(/\-$/, '') || "png-concat.concat", scale, prefix);
+try {
+    concat(process.cwd(), pngname || prefix && prefix.replace(/\-$/, '') || "png-concat.concat", scale, prefix);
+}
+catch (e) {
+    console.error(e.message)
+}
